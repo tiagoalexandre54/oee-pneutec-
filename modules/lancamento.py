@@ -427,7 +427,7 @@ def tela_lancamento():
         })
 
     # Linha TOTAIS / MÉDIAS
-    dias_prod = [r for r in rows if r["Pneus Produzidos"] > 0]
+    dias_prod = [r for r in rows if r["Produzidos"] > 0]
     if dias_prod:
         n = len(dias_prod)
         def _avg_pct(col):
