@@ -97,6 +97,44 @@ def tela_lancamento():
     if e:
         st.info(f"✏️ Editando lançamento de **{data_sel.strftime('%d/%m/%Y')}** — dados anteriores carregados.")
 
+        with st.expander("📅 Alterar a data deste lançamento", expanded=False):
+            st.caption("Use para corrigir lançamentos registrados na data errada.")
+            _col_nd, _col_nb = st.columns([2, 1])
+            _nova_data  = _col_nd.date_input(
+                "Mover para a data:",
+                value=data_sel,
+                max_value=hoje,
+                key="lanc_nova_data",
+            )
+            _nova_chave = _nova_data.isoformat()
+            _conflito   = _nova_chave in lancs and _nova_chave != chave
+            _pode_mover = _nova_chave != chave
+
+            if _conflito:
+                st.warning(
+                    f"⚠️ Já existe um lançamento em **{_nova_data.strftime('%d/%m/%Y')}**. "
+                    "Confirmar irá **substituir** o registro existente nessa data."
+                )
+            if not _pode_mover:
+                st.caption("Escolha uma data diferente da atual para habilitar o botão.")
+
+            if _col_nb.button(
+                "🔄 Confirmar",
+                type="primary",
+                disabled=not _pode_mover,
+                key="btn_alterar_data",
+                help="Move este lançamento para a nova data selecionada",
+            ):
+                dados["lancamentos"][_nova_chave] = dados["lancamentos"].pop(chave)
+                salvar_oee(dados)
+                st.session_state.oee_dados = dados
+                st.session_state["_lanc_edit_override"] = _nova_data
+                st.session_state["_lanc_salvo"] = (
+                    f"{_nova_data.strftime('%d/%m/%Y')} "
+                    f"(data corrigida de {data_sel.strftime('%d/%m/%Y')})"
+                )
+                st.rerun()
+
     # ── Picker de registros existentes ───────────────────────────────────────
     if lancs:
         datas_ord = sorted(lancs.keys(), reverse=True)
