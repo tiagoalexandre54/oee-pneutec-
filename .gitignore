@@ -1,0 +1,19 @@
+__pycache__/
+*.pyc
+*.pyo
+
+# Secrets — NUNCA commitar tokens/senhas
+.streamlit/secrets.toml
+
+# Banco de dados local — mantido só via GitHub API
+data/oee.json
+data/*.tmp
+
+# Ambiente
+.env
+.venv/
+venv/
+
+# OS
+.DS_Store
+Thumbs.db
