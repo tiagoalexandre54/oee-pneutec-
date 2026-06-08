@@ -95,6 +95,45 @@ def tela_lancamento():
 
     st.markdown("---")
 
+    # ── Calculadora ao vivo — Meta por colaboradores ──────────────────────────
+    pneus_hd = float(config.get("pneus_colab_mes", 180)) / max(float(config.get("dias_uteis", 20)), 1)
+
+    st.markdown("#### 🧮 Calculadora de Meta do Dia")
+    _col_calc, _col_res = st.columns([1, 2])
+    _n_colab = _col_calc.number_input(
+        "Colaboradores presentes hoje:",
+        min_value=0, max_value=200,
+        value=int(e.get("colab_presentes", 0)),
+        key="calc_colab_live",
+        help="Mude aqui para ver quantos pneus deveriam ser produzidos",
+    )
+    _meta_sim   = round(_n_colab * pneus_hd)
+    _prod_salva = int(e.get("produzidos", 0))
+    _delta_txt  = ""
+    if _prod_salva > 0 and _meta_sim > 0:
+        _diff = _prod_salva - _meta_sim
+        _sinal = "▲ +" if _diff >= 0 else "▼ "
+        _cor_d = "#2E7D32" if _diff >= 0 else "#C62828"
+        _delta_txt = (
+            f'<span style="font-size:12px;color:{_cor_d};margin-left:8px;">'
+            f'{_sinal}{_diff} pneus vs produzido ({_prod_salva})</span>'
+        )
+    _col_res.markdown(
+        f'<div style="background:#1A2236;border-radius:10px;padding:14px 18px;'
+        f'border:1px solid #2A3548;display:flex;align-items:center;gap:16px;">'
+        f'<div>'
+        f'<div style="font-size:11px;color:#9AA3B2;font-weight:700;text-transform:uppercase;'
+        f'letter-spacing:.7px;margin-bottom:4px;">🎯 Deveria Produzir com {_n_colab} colab.</div>'
+        f'<div style="font-size:2.2rem;font-weight:900;color:#4FC3F7;line-height:1;">'
+        f'{_meta_sim} pneus</div>'
+        f'<div style="font-size:11px;color:#9AA3B2;margin-top:3px;">'
+        f'{pneus_hd:.1f} pneus/colaborador/dia{_delta_txt}</div>'
+        f'</div></div>',
+        unsafe_allow_html=True,
+    )
+
+    st.markdown("---")
+
     # ── Formulário ────────────────────────────────────────────────────────────
     with st.form("form_lanc"):
         col_a, col_b = st.columns(2)
@@ -116,6 +155,12 @@ def tela_lancamento():
                 min_value=0, max_value=200,
                 value=int(e.get("colab_presentes", 0)),
                 help="Colaboradores que compareceram ao trabalho",
+            )
+            faltas = st.number_input(
+                "Faltas (ausências):",
+                min_value=0, max_value=200,
+                value=int(e.get("faltas", 0)),
+                help="Número de faltas registradas no dia (pode incluir justificadas e injustificadas)",
             )
 
         with col_b:
@@ -154,6 +199,21 @@ def tela_lancamento():
             value=int(e.get("defeitos", 0)),
         )
 
+        st.markdown(
+            '<div style="background:#1F2E45;border-radius:8px;padding:14px 16px;'
+            'margin-top:8px;margin-bottom:8px;border:1px solid #2A3548;">'
+            '<b>📝 Observações do Dia</b></div>',
+            unsafe_allow_html=True,
+        )
+        observacoes = st.text_area(
+            "Observações:",
+            value=e.get("observacoes", ""),
+            placeholder="Ex: manutenção corretiva na prensa 2, falta de material às 14h, colaborador de férias...",
+            height=80,
+            label_visibility="collapsed",
+            help="Anotações livres sobre o dia — visível na tabela de resumo do mês",
+        )
+
         salvar = st.form_submit_button("💾 Salvar Lançamento", type="primary", width="stretch")
 
     # ── Validação e salvamento ────────────────────────────────────────────────
@@ -177,10 +237,12 @@ def tela_lancamento():
             dados["lancamentos"][chave] = {
                 "colab_total":     colab_total,
                 "colab_presentes": colab_pres,
+                "faltas":          faltas,
                 "paradas_plan_h":  par_plan,
                 "paradas_nplan_h": par_nplan,
                 "produzidos":      produzidos,
                 "defeitos":        defeitos,
+                "observacoes":     observacoes.strip(),
             }
             salvar_oee(dados)
             st.session_state.oee_dados = dados
@@ -212,19 +274,60 @@ def tela_lancamento():
             else:
                 st.error(f"**{s}** — Atenção: OEE abaixo do esperado.")
 
+            # ── Deveria Produzir vs Produziu ──────────────────────────────
+            _deveria = c["pneus_a_produzir"]
+            _produziu = c["produzidos"]
+            _diff_prod = _produziu - _deveria
+            _cor_diff  = "#2E7D32" if _diff_prod >= 0 else "#C62828"
+            st.markdown(
+                f'<div style="background:#1A2236;border-radius:10px;padding:16px 20px;'
+                f'border:1px solid #2A3548;margin-bottom:16px;display:flex;gap:24px;align-items:center;">'
+                f'<div style="text-align:center;">'
+                f'<div style="font-size:10px;color:#9AA3B2;font-weight:700;text-transform:uppercase;letter-spacing:.7px;">🎯 Deveria Produzir</div>'
+                f'<div style="font-size:2rem;font-weight:900;color:#4FC3F7;">{_deveria}</div>'
+                f'<div style="font-size:11px;color:#9AA3B2;">{c["colab_presentes"]} colab × {c["pneus_homem_dia"]:.1f} pneus/H/dia</div>'
+                f'</div>'
+                f'<div style="font-size:1.8rem;color:#2A3548;font-weight:300;">→</div>'
+                f'<div style="text-align:center;">'
+                f'<div style="font-size:10px;color:#9AA3B2;font-weight:700;text-transform:uppercase;letter-spacing:.7px;">🔧 Produziu</div>'
+                f'<div style="font-size:2rem;font-weight:900;color:#E8EAF0;">{_produziu}</div>'
+                f'<div style="font-size:11px;color:#9AA3B2;">pneus produzidos</div>'
+                f'</div>'
+                f'<div style="font-size:1.8rem;color:#2A3548;font-weight:300;">=</div>'
+                f'<div style="text-align:center;">'
+                f'<div style="font-size:10px;color:#9AA3B2;font-weight:700;text-transform:uppercase;letter-spacing:.7px;">📊 Diferença</div>'
+                f'<div style="font-size:2rem;font-weight:900;color:{_cor_diff};">'
+                f'{"+" if _diff_prod >= 0 else ""}{_diff_prod}</div>'
+                f'<div style="font-size:11px;color:{_cor_diff};">'
+                f'{"▲ acima da meta" if _diff_prod >= 0 else "▼ abaixo da meta"}</div>'
+                f'</div>'
+                f'</div>',
+                unsafe_allow_html=True,
+            )
+
             # Detalhes técnicos
             st.markdown("#### 🔍 Detalhamento")
             col_d1, col_d2, col_d3, col_d4 = st.columns(4)
-            col_d1.metric("Colab. Ausentes",  c["colab_ausentes"])
+            col_d1.metric("Faltas do Dia",    dados["lancamentos"][chave].get("faltas", c["colab_ausentes"]))
             col_d2.metric("Tempo Disp. (h)",  f"{c['tempo_disp']:.1f}h")
             col_d3.metric("Tempo Oper. (h)",  f"{c['tempo_oper']:.1f}h")
             col_d4.metric("Paradas Total (h)", f"{c['paradas_total_h']:.1f}h")
 
             col_d5, col_d6, col_d7, col_d8 = st.columns(4)
             col_d5.metric("Pneus/Homem/dia",  f"{c['pneus_homem_dia']:.0f}")
-            col_d6.metric("Pneus a Produzir", c["pneus_a_produzir"])
+            col_d6.metric("Colab. Ausentes",  c["colab_ausentes"])
             col_d7.metric("Aprovados",         c["aprovados"])
             col_d8.metric("Defeitos",          c["defeitos"])
+
+            # Observações do dia
+            _obs = dados["lancamentos"][chave].get("observacoes", "")
+            if _obs:
+                st.markdown(
+                    f'<div style="background:#0D2137;border-radius:8px;padding:12px 16px;'
+                    f'font-size:13px;color:#90CAF9;border:1px solid #1565C0;margin-top:8px;">'
+                    f'<b>📝 Observações:</b> {_obs}</div>',
+                    unsafe_allow_html=True,
+                )
 
     # ── Tabela resumo do mês ──────────────────────────────────────────────────
     st.markdown("---")
@@ -245,22 +348,23 @@ def tela_lancamento():
             "Data":               dt.strftime("%d/%m/%Y"),
             "Dia da Semana":      dt.strftime("%A"),
             "Total Colab.":       c["colab_total"],
-            "Colab. Presentes":   c["colab_presentes"],
-            "Colab. Ausentes":    c["colab_ausentes"],
+            "Presentes":          c["colab_presentes"],
+            "Faltas":             int(lanc.get("faltas", c["colab_ausentes"])),
             "T. Disp.(h)":        round(c["tempo_disp"],     2),
             "Par. Plan.(h)":      round(c["paradas_plan_h"], 2),
             "Par. N.Plan.(h)":    round(c["paradas_nplan_h"],2),
             "T. Oper.(h)":        round(c["tempo_oper"],     2),
-            "Pneus/Homem/dia":    round(c["pneus_homem_dia"],1),
-            "Pneus a Produzir":   c["pneus_a_produzir"],
-            "Pneus Produzidos":   c["produzidos"],
-            "Pneus Defeito":      c["defeitos"],
-            "Pneus Aprovados":    c["aprovados"],
+            "Pneus/H/dia":        round(c["pneus_homem_dia"],1),
+            "Deveria Produzir":   c["pneus_a_produzir"],
+            "Produzidos":         c["produzidos"],
+            "Defeitos":           c["defeitos"],
+            "Aprovados":          c["aprovados"],
             "Disponib. (A)":      f"{c['disponibilidade']*100:.2f}%",
             "Desempenho (P)":     f"{c['desempenho']*100:.2f}%",
             "Qualidade (Q)":      f"{c['qualidade']*100:.2f}%",
             "OEE (%)":            f"{c['oee']*100:.2f}%",
             "Status":             status_oee(c["oee"]) if c["produzidos"] > 0 else "—",
+            "Observações":        lanc.get("observacoes", ""),
         })
 
     # Linha TOTAIS / MÉDIAS
@@ -275,32 +379,32 @@ def tela_lancamento():
             "Data":               "TOTAIS / MÉDIAS",
             "Dia da Semana":      f"({n} dias c/ prod.)",
             "Total Colab.":       "",
-            "Colab. Presentes":   round(sum(r["Colab. Presentes"] for r in dias_prod) / n, 1),
-            "Colab. Ausentes":    round(sum(r["Colab. Ausentes"]  for r in dias_prod) / n, 1),
+            "Presentes":          round(sum(r["Presentes"]  for r in dias_prod) / n, 1),
+            "Faltas":             sum(r["Faltas"] for r in dias_prod),
             "T. Disp.(h)":        round(sum(r["T. Disp.(h)"]     for r in dias_prod), 2),
             "Par. Plan.(h)":      round(sum(r["Par. Plan.(h)"]   for r in dias_prod), 2),
             "Par. N.Plan.(h)":    round(sum(r["Par. N.Plan.(h)"] for r in dias_prod), 2),
             "T. Oper.(h)":        round(sum(r["T. Oper.(h)"]     for r in dias_prod), 2),
-            "Pneus/Homem/dia":    round(sum(r["Pneus/Homem/dia"] for r in dias_prod) / n, 1),
-            "Pneus a Produzir":   round(sum(r["Pneus a Produzir"] for r in dias_prod) / n),
-            "Pneus Produzidos":   sum(r["Pneus Produzidos"] for r in dias_prod),
-            "Pneus Defeito":      sum(r["Pneus Defeito"]   for r in dias_prod),
-            "Pneus Aprovados":    sum(r["Pneus Aprovados"]  for r in dias_prod),
+            "Pneus/H/dia":        round(sum(r["Pneus/H/dia"] for r in dias_prod) / n, 1),
+            "Deveria Produzir":   round(sum(r["Deveria Produzir"] for r in dias_prod) / n),
+            "Produzidos":         sum(r["Produzidos"] for r in dias_prod),
+            "Defeitos":           sum(r["Defeitos"]   for r in dias_prod),
+            "Aprovados":          sum(r["Aprovados"]  for r in dias_prod),
             "Disponib. (A)":      _avg_pct("Disponib. (A)"),
             "Desempenho (P)":     _avg_pct("Desempenho (P)"),
             "Qualidade (Q)":      _avg_pct("Qualidade (Q)"),
             "OEE (%)":            _avg_pct("OEE (%)"),
             "Status":             "",
+            "Observações":        "",
         })
 
     df_tab = pd.DataFrame(rows)
     # "Total Colab." tem string "" na linha de totais e int nas demais → str
     if "Total Colab." in df_tab.columns:
         df_tab["Total Colab."] = df_tab["Total Colab."].astype(str)
-    # Colab. Presentes/Ausentes: int nas linhas, float na de totais → float
-    for _c in ["Colab. Presentes", "Colab. Ausentes"]:
-        if _c in df_tab.columns:
-            df_tab[_c] = pd.to_numeric(df_tab[_c], errors="coerce")
+    # Presentes: int nas linhas, float na linha de totais → float
+    if "Presentes" in df_tab.columns:
+        df_tab["Presentes"] = pd.to_numeric(df_tab["Presentes"], errors="coerce")
     st.dataframe(df_tab, hide_index=True, width="stretch")
     st.caption(
         "📌 TOTAIS = soma · MÉDIAS = média dos dias com produção  |  "
