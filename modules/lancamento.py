@@ -85,6 +85,10 @@ def tela_lancamento():
     )
 
     # ── Seleção de data ───────────────────────────────────────────────────────
+    # Permite saltar para um registro existente via picker de edição
+    if "_lanc_edit_override" in st.session_state:
+        st.session_state["lanc_data"] = st.session_state.pop("_lanc_edit_override")
+
     hoje     = datetime.date.today()
     data_sel = st.date_input("📅 Data do lançamento:", value=hoje, max_value=hoje, key="lanc_data")
     chave    = data_sel.isoformat()
@@ -92,6 +96,48 @@ def tela_lancamento():
 
     if e:
         st.info(f"✏️ Editando lançamento de **{data_sel.strftime('%d/%m/%Y')}** — dados anteriores carregados.")
+
+    # ── Picker de registros existentes ───────────────────────────────────────
+    if lancs:
+        datas_ord = sorted(lancs.keys(), reverse=True)
+        with st.expander(
+            f"📋 Selecionar registro existente para editar  "
+            f"({len(datas_ord)} lançamento{'s' if len(datas_ord) != 1 else ''} registrado{'s' if len(datas_ord) != 1 else ''})",
+            expanded=False,
+        ):
+            # Agrupa por mês para facilitar a navegação
+            meses_disp = sorted({d[:7] for d in datas_ord}, reverse=True)
+            _col_m, _col_d, _col_b = st.columns([2, 2, 1])
+
+            _mes_edit = _col_m.selectbox(
+                "Mês:",
+                meses_disp,
+                format_func=lambda m: datetime.date.fromisoformat(m + "-01").strftime("%B %Y").capitalize(),
+                key="edit_mes_sel",
+            )
+            _datas_mes = sorted(
+                [d for d in datas_ord if d.startswith(_mes_edit)],
+                reverse=True,
+            )
+
+            def _fmt_data(d: str) -> str:
+                lanc = lancs.get(d, {})
+                prod = lanc.get("produzidos", 0)
+                obs  = lanc.get("observacoes", "")
+                tag  = f"{prod} pneus" if prod else "sem produção"
+                suf  = f" · {obs[:30]}…" if obs else ""
+                return f"{datetime.date.fromisoformat(d).strftime('%d/%m/%Y')} — {tag}{suf}"
+
+            _data_edit = _col_d.selectbox(
+                "Data:",
+                _datas_mes,
+                format_func=_fmt_data,
+                key="edit_data_sel",
+            )
+
+            if _col_b.button("✏️ Editar", type="primary", key="btn_ir_editar"):
+                st.session_state["_lanc_edit_override"] = datetime.date.fromisoformat(_data_edit)
+                st.rerun()
 
     st.markdown("---")
 
@@ -340,6 +386,19 @@ def tela_lancamento():
         return
 
     st.markdown(f"#### 📅 Resumo de {data_sel.strftime('%B %Y').capitalize()}")
+
+    # Botões de edição rápida por dia
+    _datas_mes_exist = sorted([k for k in dados["lancamentos"] if k.startswith(mes_atual)])
+    if len(_datas_mes_exist) > 1:
+        _cols_edit = st.columns(min(len(_datas_mes_exist), 7))
+        for _i, _dk in enumerate(_datas_mes_exist[:7]):
+            _dt_btn = datetime.date.fromisoformat(_dk)
+            _prod_btn = dados["lancamentos"][_dk].get("produzidos", 0)
+            _label_btn = f"{_dt_btn.strftime('%d/%m')}\n{_prod_btn}🔧"
+            if _cols_edit[_i % 7].button(_label_btn, key=f"btn_edit_quick_{_dk}", help=f"Editar {_dt_btn.strftime('%d/%m/%Y')}"):
+                st.session_state["_lanc_edit_override"] = _dt_btn
+                st.rerun()
+
     rows = []
     for k, lanc in dias_mes:
         dt = datetime.date.fromisoformat(k)
