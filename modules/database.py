@@ -36,6 +36,7 @@ _CONFIG_PADRAO = {
     "pneus_colab_mes": 180,
     "turno_horas":     8.8,
     "dias_uteis":      20,
+    "metas_mensais":   {},   # {"2026-01": 7200, "2026-02": 6480, ...}
 }
 _DADOS_PADRAO = {
     "_schema":       _SCHEMA,
@@ -226,9 +227,12 @@ def agregar_mes(lancamentos: dict, config: dict, mes_iso: str) -> dict | None:
         return None
 
     calcs = [calcular_dia(v, config) for _, v in dias_prod]
-    meta_diaria = float(config.get("meta_diaria", 360))
-    dias_uteis  = int(config.get("dias_uteis", 20))
-    meta_mensal = meta_diaria * dias_uteis
+    meta_diaria   = float(config.get("meta_diaria", 360))
+    dias_uteis    = int(config.get("dias_uteis", 20))
+    metas_mensais = config.get("metas_mensais", {})
+    # Usa meta específica do mês se cadastrada; caso contrário, meta global
+    meta_custom = metas_mensais.get(mes_iso)
+    meta_mensal = float(meta_custom) if meta_custom else (meta_diaria * dias_uteis)
 
     n = len(calcs)
     return {

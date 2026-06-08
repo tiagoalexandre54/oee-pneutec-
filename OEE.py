@@ -247,6 +247,74 @@ elif menu == "⚙️ Configurações":
         st.session_state.oee_dados = dados
         st.success("✅ Configurações salvas com sucesso!")
 
+    # ── Metas de Produção por Mês ─────────────────────────────────────────────
+    st.markdown("---")
+    st.markdown("#### 🎯 Metas de Produção por Mês")
+    st.caption(
+        "Defina uma meta personalizada para cada mês. "
+        "**0 = usar padrão** (Meta Diária × Dias Úteis configurados acima)."
+    )
+
+    _MESES_NOMES = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"]
+    _ano_hoje    = _dt.date.today().year
+
+    _col_yr, _ = st.columns([1, 3])
+    _ano_sel_m  = _col_yr.selectbox(
+        "Ano:", [_ano_hoje - 1, _ano_hoje, _ano_hoje + 1],
+        index=1, key="cfg_ano_metas",
+    )
+
+    # Recarrega config (pode ter sido salvo acima)
+    _cfg_atual    = st.session_state.oee_dados.get("config", {})
+    _metas_cfg    = _cfg_atual.get("metas_mensais", {})
+    _meta_padrao  = int(_cfg_atual.get("meta_diaria", 360)) * int(_cfg_atual.get("dias_uteis", 20))
+
+    # Preview: quais meses têm meta customizada neste ano
+    _meses_custom = [
+        f"{_MESES_NOMES[int(k[5:7])-1]}/{k[:4]}: **{int(v):,}**"
+        for k, v in _metas_cfg.items()
+        if k.startswith(str(_ano_sel_m)) and v
+    ]
+    if _meses_custom:
+        st.info("📌 Metas personalizadas cadastradas: " + " · ".join(_meses_custom))
+    else:
+        st.caption(f"Nenhuma meta personalizada para {_ano_sel_m}. Todos os meses usam o padrão de **{_meta_padrao:,} pneus**.")
+
+    with st.form("form_metas_mensais"):
+        st.caption(f"📦 Padrão global: **{_meta_padrao:,} pneus/mês**. Deixe 0 para usar o padrão no mês.")
+        _metas_novas = {}
+
+        for _row in range(3):
+            _cols_m = st.columns(4)
+            for _ci in range(4):
+                _mi       = _row * 4 + _ci
+                _mes_nome = _MESES_NOMES[_mi]
+                _mes_key  = f"{_ano_sel_m}-{_mi+1:02d}"
+                _val_atual = int(_metas_cfg.get(_mes_key) or 0)
+                _v = _cols_m[_ci].number_input(
+                    f"{_mes_nome} {_ano_sel_m}",
+                    min_value=0,
+                    max_value=999_999,
+                    value=_val_atual,
+                    step=100,
+                    help=f"Padrão: {_meta_padrao:,} pneus. Digite 0 para usar o padrão.",
+                    key=f"meta_{_mes_key}",
+                )
+                if _v > 0:
+                    _metas_novas[_mes_key] = _v
+
+        _salvar_metas = st.form_submit_button("💾 Salvar Metas Mensais", type="primary", width="stretch")
+
+    if _salvar_metas:
+        # Preserva metas de outros anos, sobrescreve apenas o ano selecionado
+        _todas_metas = {k: v for k, v in _metas_cfg.items() if not k.startswith(str(_ano_sel_m))}
+        _todas_metas.update(_metas_novas)
+        dados["config"]["metas_mensais"] = _todas_metas
+        salvar_oee(dados)
+        st.session_state.oee_dados = dados
+        st.success(f"✅ Metas mensais de {_ano_sel_m} salvas! ({len(_metas_novas)} meses personalizados)")
+        st.rerun()
+
     # ── Backup & Restauração ──────────────────────────────────────────────────
     st.markdown("---")
     st.markdown("#### 💾 Backup & Restauração de Dados")

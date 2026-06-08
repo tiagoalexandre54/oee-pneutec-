@@ -278,7 +278,9 @@ def tela_analise_mensal():
         ano_manual = col2.text_input("Ano:", value=ano_sel, key="am_ano_manual")
         mes_key    = f"{ano_manual}-{_MESES_ISO[mes_manual]}"
         ex         = manual.get(mes_key, {})
-        meta_m_def = int(meta_diaria * dias_uteis)
+        # Usa meta específica do mês se cadastrada em config; senão usa meta global
+        _metas_cfg = config.get("metas_mensais", {})
+        meta_m_def = int(_metas_cfg.get(mes_key) or (meta_diaria * dias_uteis))
 
         with st.form("form_mensal_manual"):
             st.markdown("##### 📦 Volumes de Produção")
