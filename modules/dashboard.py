@@ -202,7 +202,7 @@ def tela_dashboard():
                 "Status":      status_oee(c["oee"]),
             })
 
-    st.dataframe(pd.DataFrame(rows), hide_index=True, use_container_width=True)
+    st.dataframe(pd.DataFrame(rows), hide_index=True, width="stretch")
 
     # ── Gráfico de tendência ──────────────────────────────────────────────────
     df_chart = pd.DataFrame([

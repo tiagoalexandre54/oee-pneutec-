@@ -65,7 +65,7 @@ if "oee_dados" not in st.session_state:
 with st.sidebar:
     # Logo / Brand
     if _LOGO_PATH.exists():
-        st.image(str(_LOGO_PATH), use_container_width=True)
+        st.image(str(_LOGO_PATH), width="stretch")
     else:
         st.markdown("""
         <div style="background:linear-gradient(135deg,#003366,#0066CC);

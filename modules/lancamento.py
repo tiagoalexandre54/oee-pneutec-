@@ -154,7 +154,7 @@ def tela_lancamento():
             value=int(e.get("defeitos", 0)),
         )
 
-        salvar = st.form_submit_button("💾 Salvar Lançamento", type="primary", use_container_width=True)
+        salvar = st.form_submit_button("💾 Salvar Lançamento", type="primary", width="stretch")
 
     # ── Validação e salvamento ────────────────────────────────────────────────
     if salvar:
@@ -301,7 +301,7 @@ def tela_lancamento():
     for _c in ["Colab. Presentes", "Colab. Ausentes"]:
         if _c in df_tab.columns:
             df_tab[_c] = pd.to_numeric(df_tab[_c], errors="coerce")
-    st.dataframe(df_tab, hide_index=True, use_container_width=True)
+    st.dataframe(df_tab, hide_index=True, width="stretch")
     st.caption(
         "📌 TOTAIS = soma · MÉDIAS = média dos dias com produção  |  "
         "🟢 OEE ≥85% · 🟡 65–84% · 🟠 45–64% · 🔴 <45%"

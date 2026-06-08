@@ -224,7 +224,7 @@ def tela_analise_mensal():
         for _col in ["Dias Prod.", "Meta Mensal"]:
             if _col in df_view.columns:
                 df_view[_col] = df_view[_col].astype(str)
-        st.dataframe(df_view, hide_index=True, use_container_width=True)
+        st.dataframe(df_view, hide_index=True, width="stretch")
 
         # ── Gráfico de evolução ───────────────────────────────────────────────
         chart_src = [r for r in rows_dados if r["_oee_raw"] is not None]

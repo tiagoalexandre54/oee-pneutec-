@@ -105,7 +105,7 @@ def tela_homem_mes():
         "% vs Meta":          f"{media_pp / meta_pp * 100:.1f}%" if meta_pp else "—",
     })
 
-    st.dataframe(pd.DataFrame(rows_tab), hide_index=True, use_container_width=True)
+    st.dataframe(pd.DataFrame(rows_tab), hide_index=True, width="stretch")
 
     # ── Gráfico ───────────────────────────────────────────────────────────────
     if n >= 2:
