@@ -159,6 +159,10 @@ elif menu == "🔧 Pneus Homem-Mês":
     tela_homem_mes()
 
 elif menu == "⚙️ Configurações":
+    import json as _json
+    import datetime as _dt
+    from modules.database import _modo_github
+
     st.markdown("""
     <div style="background:linear-gradient(135deg,#003366 0%,#0066CC 100%);
                 padding:22px 28px;border-radius:12px;margin-bottom:24px;">
@@ -171,8 +175,25 @@ elif menu == "⚙️ Configurações":
     </div>
     """, unsafe_allow_html=True)
 
+    # ── Status de persistência ────────────────────────────────────────────────
+    n_lanc = len(dados.get("lancamentos", {}))
+    n_man  = len(dados.get("analise_manual", {}))
+    if _modo_github():
+        st.success(
+            f"☁️ **Dados salvos no GitHub** — sincronização automática ativa.  \n"
+            f"📦 {n_lanc} lançamentos · {n_man} análises manuais em nuvem."
+        )
+    else:
+        st.warning(
+            f"⚠️ **Modo local apenas** — dados salvos só neste computador.  \n"
+            f"📦 {n_lanc} lançamentos · {n_man} análises manuais locais.  \n"
+            f"Configure o token GitHub em `.streamlit/secrets.toml` para não perder dados."
+        )
+
     config = dados.get("config", {})
 
+    # ── Formulário de parâmetros ──────────────────────────────────────────────
+    st.markdown("#### ⚙️ Parâmetros de Produção")
     with st.form("form_config"):
         col1, col2 = st.columns(2)
 
@@ -203,14 +224,12 @@ elif menu == "⚙️ Configurações":
             pneus_colab = st.number_input(
                 "Pneus/Colab/Mês (meta):", 1, 2000,
                 int(config.get("pneus_colab_mes", 180)),
-                help="Meta de produção por colaborador por mês. "
-                     "Define: Pneus/Homem/dia = Pneus/Colab/Mês ÷ Dias Úteis",
+                help="Meta de produção por colaborador por mês.",
             )
             turno_h = st.number_input(
                 "Turno (horas):", 1.0, 24.0,
                 float(config.get("turno_horas", 8.8)),
                 step=0.1, format="%.1f",
-                help="Duração do turno de trabalho em horas",
             )
             pneus_hd = pneus_colab / dias_ut if dias_ut > 0 else 0
             st.caption(f"👤 Pneus/Homem/dia calculado: **{pneus_hd:.1f}**")
@@ -227,6 +246,60 @@ elif menu == "⚙️ Configurações":
         salvar_oee(dados)
         st.session_state.oee_dados = dados
         st.success("✅ Configurações salvas com sucesso!")
+
+    # ── Backup & Restauração ──────────────────────────────────────────────────
+    st.markdown("---")
+    st.markdown("#### 💾 Backup & Restauração de Dados")
+
+    col_dl, col_up = st.columns(2)
+
+    with col_dl:
+        st.markdown(
+            '<div style="background:#1F2E45;border-radius:8px;padding:12px 16px;'
+            'margin-bottom:12px;border:1px solid #2A3548;"><b>⬇️ Baixar Backup</b></div>',
+            unsafe_allow_html=True,
+        )
+        backup_bytes = _json.dumps(dados, ensure_ascii=False, indent=2).encode("utf-8")
+        fname = f"oee_backup_{_dt.date.today().isoformat()}.json"
+        st.download_button(
+            label="⬇️ Baixar Backup Completo",
+            data=backup_bytes,
+            file_name=fname,
+            mime="application/json",
+            help="Salva todos os lançamentos e análises num arquivo .json",
+        )
+        st.caption(
+            f"Arquivo: `{fname}`  \n"
+            f"Contém: **{n_lanc}** lançamentos + **{n_man}** análises manuais"
+        )
+
+    with col_up:
+        st.markdown(
+            '<div style="background:#1F2E45;border-radius:8px;padding:12px 16px;'
+            'margin-bottom:12px;border:1px solid #2A3548;"><b>📤 Restaurar Backup</b></div>',
+            unsafe_allow_html=True,
+        )
+        arquivo = st.file_uploader(
+            "Selecione o arquivo de backup (.json):",
+            type=["json"],
+            key="upload_backup",
+            label_visibility="collapsed",
+        )
+        if arquivo is not None:
+            try:
+                dados_bkp = _json.loads(arquivo.read())
+                if dados_bkp.get("_schema") == 2:
+                    n_l = len(dados_bkp.get("lancamentos", {}))
+                    n_m = len(dados_bkp.get("analise_manual", {}))
+                    st.info(f"📦 Backup: **{n_l}** lançamentos · **{n_m}** análises manuais")
+                    if st.button("✅ Restaurar estes dados", type="primary", key="btn_restaurar"):
+                        salvar_oee(dados_bkp)
+                        st.session_state.oee_dados = dados_bkp
+                        st.success("✅ Dados restaurados com sucesso!")
+                else:
+                    st.error("❌ Arquivo inválido — schema incompatível.")
+            except Exception as _ex:
+                st.error(f"❌ Erro ao ler o arquivo: {_ex}")
 
     # ── Fórmulas OEE ─────────────────────────────────────────────────────────
     st.markdown("---")
@@ -268,22 +341,42 @@ elif menu == "⚙️ Configurações":
             f"- Pneus/colab/mês: **{int(config_atual.get('pneus_colab_mes', 180))}**"
         )
 
-    # ── Persistência cloud ────────────────────────────────────────────────────
+    # ── Zona de Perigo ────────────────────────────────────────────────────────
     st.markdown("---")
-    st.markdown("#### ☁️ Persistência na Nuvem (GitHub)")
-    st.markdown(
-        "Os dados são salvos em `data/oee.json` no repositório GitHub. "
-        "Configure o arquivo `.streamlit/secrets.toml` para sincronização em nuvem:"
-    )
-    st.code(
-        "# .streamlit/secrets.toml\n"
-        "[github]\n"
-        'token  = "ghp_seu_token_aqui"\n'
-        'repo   = "tiagoalexandre54/nsa-erp-pneutec"\n'
-        'branch = "main"',
-        language="toml",
-    )
-    st.caption(
-        "Sem token: dados salvos apenas localmente em `data/oee.json`.  \n"
-        "Com token: sincronização automática com GitHub a cada lançamento."
-    )
+    with st.expander("🗑️ Zona de Perigo — Apagar Todos os Dados", expanded=False):
+        st.markdown(
+            '<div style="background:#3B0A0A;border-radius:8px;padding:14px 18px;'
+            'border:1px solid #C62828;margin-bottom:16px;">'
+            '<b style="color:#FF5252;">⚠️ ATENÇÃO:</b>'
+            '<span style="color:#FFCDD2;"> Esta ação apaga permanentemente TODOS os lançamentos '
+            'diários e análises manuais. As configurações de metas são mantidas. '
+            'Faça um backup antes de continuar.</span></div>',
+            unsafe_allow_html=True,
+        )
+        col_conf, col_btn = st.columns([2, 1])
+        confirmar_txt = col_conf.text_input(
+            "Digite **CONFIRMAR** para habilitar o botão:",
+            key="conf_apagar",
+            placeholder="CONFIRMAR",
+        )
+        botao_habilitado = confirmar_txt.strip().upper() == "CONFIRMAR"
+        apagar = col_btn.button(
+            "🗑️ Apagar Tudo",
+            type="primary",
+            disabled=not botao_habilitado,
+            key="btn_apagar",
+        )
+        if apagar and botao_habilitado:
+            dados_zerados = {
+                "_schema": 2,
+                "config":        dados.get("config", {}),
+                "lancamentos":   {},
+                "analise_manual": {},
+            }
+            salvar_oee(dados_zerados)
+            st.session_state.oee_dados  = dados_zerados
+            st.session_state["_apagado"] = True
+
+    if st.session_state.pop("_apagado", False):
+        st.success("✅ Todos os dados foram apagados. Configurações mantidas.")
+        st.balloons()
