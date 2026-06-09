@@ -65,7 +65,7 @@ def tela_homem_mes():
                 "Aprovados":            agg["aprovados"],
                 "Defeitos":             agg["defeitos"],
                 "% Qualidade":          f"{(agg['aprovados']/agg['produzido']*100):.1f}%" if agg["produzido"] else "—",
-                "Pneus / Pessoa":       round(pp, 1),
+                "Pneus / Pessoa":       int(round(pp)),
                 "Meta Pneus/Pessoa":    int(config.get("pneus_colab_mes", 180)),
                 "% vs Meta":            f"{pp / config.get('pneus_colab_mes', 180) * 100:.1f}%"
                                         if config.get("pneus_colab_mes", 0) > 0 else "—",

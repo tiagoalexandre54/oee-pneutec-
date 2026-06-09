@@ -211,7 +211,7 @@ def tela_lancamento():
         f'<div style="font-size:2.2rem;font-weight:900;color:#4FC3F7;line-height:1;">'
         f'{_meta_sim} pneus</div>'
         f'<div style="font-size:11px;color:#9AA3B2;margin-top:3px;">'
-        f'{pneus_hd:.1f} pneus/colaborador/dia{_delta_txt}</div>'
+        f'{int(round(pneus_hd))} pneus/colaborador/dia{_delta_txt}</div>'
         f'</div></div>',
         unsafe_allow_html=True,
     )

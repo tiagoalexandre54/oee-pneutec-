@@ -232,7 +232,7 @@ elif menu == "⚙️ Configurações":
                 step=0.1, format="%.1f",
             )
             pneus_hd = pneus_colab / dias_ut if dias_ut > 0 else 0
-            st.caption(f"👤 Pneus/Homem/dia calculado: **{pneus_hd:.1f}**")
+            st.caption(f"👤 Pneus/Homem/dia calculado: **{int(round(pneus_hd))}**")
 
         salvar_cfg = st.form_submit_button("💾 Salvar Configurações", type="primary")
 
