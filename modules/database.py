@@ -206,6 +206,16 @@ def calcular_dia(lanc: dict, config: dict) -> dict:
     }
 
 
+_MESES_PT = [
+    "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+    "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro",
+]
+
+def mes_pt(dt: "datetime.date") -> str:
+    """Retorna 'Mês YYYY' em português. Ex: datetime(2026,6,1) → 'Junho 2026'"""
+    return f"{_MESES_PT[dt.month - 1]} {dt.year}"
+
+
 def status_oee(oee: float, mensal: bool = False) -> str:
     rotulo = "World Class" if mensal else "Ótimo"
     if oee >= 0.85: return f"🟢 {rotulo}"

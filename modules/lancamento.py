@@ -10,7 +10,7 @@ FIX: st.rerun() removido do handler de save — a atualização de session_state
 import streamlit as st
 import pandas as pd
 import datetime
-from modules.database import calcular_dia, salvar_oee, status_oee
+from modules.database import calcular_dia, salvar_oee, status_oee, mes_pt
 
 
 def _pct(v: float) -> str:
@@ -159,7 +159,7 @@ def tela_lancamento():
             _mes_edit = _col_m.selectbox(
                 "Mês:",
                 meses_disp,
-                format_func=lambda m: datetime.date.fromisoformat(m + "-01").strftime("%B %Y").capitalize(),
+                format_func=lambda m: mes_pt(datetime.date.fromisoformat(m + "-01")),
                 key="edit_mes_sel",
             )
             _datas_mes = sorted(
@@ -432,7 +432,7 @@ def tela_lancamento():
     if not dias_mes:
         return
 
-    st.markdown(f"#### 📅 Resumo de {data_sel.strftime('%B %Y').capitalize()}")
+    st.markdown(f"#### 📅 Resumo de {mes_pt(data_sel)}")
 
     # Cards de edição rápida por dia
     _DIAS_PT  = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"]
@@ -470,11 +470,15 @@ def tela_lancamento():
     _feriados_mes = {k: v for k, v in _feriados.items() if k.startswith(mes_atual)}
     _todas_datas  = sorted(set(k for k, _ in dias_mes) | set(_feriados_mes.keys()))
 
+    _DIAS_PT_EXT = ["Segunda-feira", "Terça-feira", "Quarta-feira",
+                    "Quinta-feira", "Sexta-feira", "Sábado", "Domingo"]
+
     rows = []
     for k in _todas_datas:
         dt         = datetime.date.fromisoformat(k)
         _fer_label = ("🔴 " + _feriados[k]) if k in _feriados else ""
         _is_fer    = k in _feriados
+        _dia_semana = _DIAS_PT_EXT[dt.weekday()]
 
         if k in dados["lancamentos"]:
             lanc = dados["lancamentos"][k]
@@ -488,7 +492,7 @@ def tela_lancamento():
                 _status = "🔴 Não Trabalhado" if _is_fer else "—"
             rows.append({
                 "Data":                 dt.strftime("%d/%m/%Y"),
-                "Dia da Semana":        dt.strftime("%A"),
+                "Dia da Semana":        _dia_semana,
                 "Feriado":              _fer_label,
                 "Total Colab.":         c["colab_total"],
                 "Colab. Presentes":     c["colab_presentes"],
@@ -514,7 +518,7 @@ def tela_lancamento():
             # Feriado sem lançamento — dia não trabalhado
             rows.append({
                 "Data":                 dt.strftime("%d/%m/%Y"),
-                "Dia da Semana":        dt.strftime("%A"),
+                "Dia da Semana":        _dia_semana,
                 "Feriado":              _fer_label,
                 "Total Colab.":         "—",
                 "Colab. Presentes":     "—",

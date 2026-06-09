@@ -5,7 +5,7 @@ Visual profissional com cards coloridos, tabela de resumo diário e gráfico de 
 import streamlit as st
 import pandas as pd
 import datetime
-from modules.database import calcular_dia, agregar_mes, status_oee
+from modules.database import calcular_dia, agregar_mes, status_oee, mes_pt
 
 
 # ── Helpers visuais ───────────────────────────────────────────────────────────
@@ -64,7 +64,7 @@ def tela_dashboard():
 
     # ── Header ────────────────────────────────────────────────────────────────
     agg = agregar_mes(lancs, config, mes_iso)
-    mes_label = hoje.strftime("%B %Y").capitalize()
+    mes_label = mes_pt(hoje)
 
     cor_header = _cor(agg["oee"]) if agg else "#003366"
     st.markdown(f"""
@@ -228,11 +228,14 @@ def tela_dashboard():
         st.info("Sem lançamentos no mês atual.")
         return
 
+    _DIAS_PT_ABR = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"]
+
     rows = []
     for chave in _todas_datas:
         dt       = datetime.date.fromisoformat(chave)
         _is_fer  = chave in _feriados
         _fer_lbl = ("🔴 " + _feriados[chave]) if _is_fer else ""
+        _dia_abr = _DIAS_PT_ABR[dt.weekday()]
 
         if chave in lancs:
             lanc = lancs[chave]
@@ -246,7 +249,7 @@ def tela_dashboard():
                 _status = "🔴 Não Trabalhado" if _is_fer else "—"
             rows.append({
                 "Data":                 dt.strftime("%d/%m/%Y"),
-                "Dia":                  dt.strftime("%a"),
+                "Dia":                  _dia_abr,
                 "Feriado":              _fer_lbl,
                 "Colab. Pres.":         c["colab_presentes"],
                 "Pneus por Homem/dia":  int(round(c["pneus_homem_dia"])),
@@ -264,7 +267,7 @@ def tela_dashboard():
             # Feriado sem lançamento
             rows.append({
                 "Data":                 dt.strftime("%d/%m/%Y"),
-                "Dia":                  dt.strftime("%a"),
+                "Dia":                  _dia_abr,
                 "Feriado":              _fer_lbl,
                 "Colab. Pres.":         0,
                 "Pneus por Homem/dia":  "—",

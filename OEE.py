@@ -6,7 +6,7 @@ NSA Pneutec — Sistema gerencial separado do ERP.
 import streamlit as st
 import datetime
 from pathlib import Path
-from modules.database import carregar_oee, salvar_oee, agregar_mes, status_oee
+from modules.database import carregar_oee, salvar_oee, agregar_mes, status_oee, mes_pt
 
 _LOGO_PATH = Path(__file__).parent / "assets" / "logo.png"
 
@@ -100,7 +100,7 @@ with st.sidebar:
 
     agg = agregar_mes(lancs, config, mes_iso)
 
-    st.markdown(f"**📅 {hoje.strftime('%B %Y').capitalize()}**")
+    st.markdown(f"**📅 {mes_pt(hoje)}**")
 
     if agg:
         oee_v = agg["oee"]
