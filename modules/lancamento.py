@@ -442,10 +442,10 @@ def tela_lancamento():
                 _bg      = "#0D2137" if _ativo else "#1A2236"
                 _cols_edit[_ci].markdown(
                     f'<div style="background:{_bg};border:1.5px solid {_border};border-radius:10px;'
-                    f'padding:8px 4px 4px;text-align:center;margin-bottom:4px;">'
-                    f'<div style="font-size:10px;color:#9AA3B2;font-weight:600;letter-spacing:.5px;">{_dia_nm}</div>'
-                    f'<div style="font-size:15px;font-weight:800;color:#E8EAF0;line-height:1.2;">{_dt_btn.strftime("%d/%m")}</div>'
-                    f'<div style="font-size:12px;color:#4FC3F7;font-weight:700;margin-top:2px;">{_prod_btn} pneus</div>'
+                    f'padding:10px 6px 6px;text-align:center;margin-bottom:4px;">'
+                    f'<div style="font-size:10px;color:#9AA3B2;font-weight:700;letter-spacing:.6px;text-transform:uppercase;">{_dia_nm}</div>'
+                    f'<div style="font-size:18px;font-weight:900;color:#E8EAF0;line-height:1.2;">{_dt_btn.strftime("%d/%m/%Y")}</div>'
+                    f'<div style="font-size:13px;color:#4FC3F7;font-weight:700;margin-top:4px;">{_prod_btn} pneus</div>'
                     f'</div>',
                     unsafe_allow_html=True,
                 )
