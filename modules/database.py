@@ -70,11 +70,11 @@ def _github_cfg():
     try:
         import streamlit as st
         cfg    = st.secrets.get("github", {})
-        repo   = cfg.get("repo",   "tiagoalexandre54/nsa-erp-pneutec")
-        branch = cfg.get("branch", "main")
+        repo   = cfg.get("repo",   "tiagoalexandre54/oee-pneutec-")
+        branch = cfg.get("branch", "master")
     except Exception:
-        repo   = "tiagoalexandre54/nsa-erp-pneutec"
-        branch = "main"
+        repo   = "tiagoalexandre54/oee-pneutec-"
+        branch = "master"
     return t, repo, branch
 
 
