@@ -315,6 +315,64 @@ elif menu == "⚙️ Configurações":
         st.success(f"✅ Metas mensais de {_ano_sel_m} salvas! ({len(_metas_novas)} meses personalizados)")
         st.rerun()
 
+    # ── Feriados ──────────────────────────────────────────────────────────────
+    st.markdown("---")
+    st.markdown("#### 🗓️ Feriados e Dias Não Úteis")
+    st.caption("Marque feriados para destacá-los nas tabelas. Isso não altera o cálculo de OEE automaticamente.")
+
+    _feriados = dados.get("feriados", {})
+    _DIAS_PT_F = ["Segunda","Terça","Quarta","Quinta","Sexta","Sábado","Domingo"]
+
+    # Adicionar novo feriado
+    _col_fd, _col_fn, _col_fb = st.columns([1.5, 2.5, 1])
+    _fd_data = _col_fd.date_input("📅 Data:", value=_dt.date.today(), key="feriado_data_input")
+    _fd_nome = _col_fn.text_input("📝 Nome do feriado:", placeholder="Ex: Corpus Christi", key="feriado_nome_input")
+    _fd_add  = _col_fb.button("➕ Adicionar", type="primary", use_container_width=True, key="btn_add_feriado")
+
+    if _fd_add:
+        _fd_chave = _fd_data.isoformat()
+        _fd_label = _fd_nome.strip() if _fd_nome.strip() else "Feriado"
+        dados.setdefault("feriados", {})[_fd_chave] = _fd_label
+        salvar_oee(dados)
+        st.session_state.oee_dados = dados
+        st.success(f"✅ Feriado **{_fd_label}** em {_fd_data.strftime('%d/%m/%Y')} adicionado!")
+        st.rerun()
+
+    # Lista de feriados cadastrados
+    if _feriados:
+        _feriados_sorted = sorted(_feriados.items(), key=lambda x: x[0])
+        _anos_fer = sorted(set(k[:4] for k in _feriados))
+        _ano_fer_sel = st.selectbox("Filtrar por ano:", _anos_fer + ["Todos"],
+                                    index=len(_anos_fer), key="sel_ano_feriado")
+
+        _fer_filtrado = [(k, v) for k, v in _feriados_sorted
+                         if _ano_fer_sel == "Todos" or k.startswith(_ano_fer_sel)]
+
+        if _fer_filtrado:
+            for _fk, _fv in _fer_filtrado:
+                _fdt  = _dt.date.fromisoformat(_fk)
+                _fdia = _DIAS_PT_F[_fdt.weekday()]
+                _fc1, _fc2 = st.columns([5, 1])
+                _fc1.markdown(
+                    f'<div style="background:#1A2236;border:1px solid #2A3548;border-radius:8px;'
+                    f'padding:8px 14px;display:flex;align-items:center;gap:12px;">'
+                    f'<span style="font-size:1.3rem;">🗓️</span>'
+                    f'<div>'
+                    f'<div style="font-size:13px;font-weight:800;color:#E8EAF0;">{_fv}</div>'
+                    f'<div style="font-size:11px;color:#9AA3B2;">{_fdia}, {_fdt.strftime("%d/%m/%Y")}</div>'
+                    f'</div></div>',
+                    unsafe_allow_html=True,
+                )
+                if _fc2.button("🗑️ Remover", key=f"btn_del_fer_{_fk}", use_container_width=True):
+                    dados["feriados"].pop(_fk, None)
+                    salvar_oee(dados)
+                    st.session_state.oee_dados = dados
+                    st.rerun()
+        else:
+            st.caption(f"Nenhum feriado cadastrado para {_ano_fer_sel}.")
+    else:
+        st.info("Nenhum feriado cadastrado. Use o formulário acima para adicionar.")
+
     # ── Backup & Restauração ──────────────────────────────────────────────────
     st.markdown("---")
     st.markdown("#### 💾 Backup & Restauração de Dados")

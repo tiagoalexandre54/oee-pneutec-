@@ -426,7 +426,8 @@ def tela_lancamento():
     st.markdown(f"#### 📅 Resumo de {data_sel.strftime('%B %Y').capitalize()}")
 
     # Cards de edição rápida por dia
-    _DIAS_PT = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"]
+    _DIAS_PT  = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"]
+    _feriados = dados.get("feriados", {})
     _datas_mes_exist = sorted([k for k in dados["lancamentos"] if k.startswith(mes_atual)])
     if _datas_mes_exist:
         _ncols = min(len(_datas_mes_exist), 7)
@@ -434,18 +435,21 @@ def tela_lancamento():
             _row_dks = _datas_mes_exist[_row_s : _row_s + _ncols]
             _cols_edit = st.columns(len(_row_dks))
             for _ci, _dk in enumerate(_row_dks):
-                _dt_btn  = datetime.date.fromisoformat(_dk)
+                _dt_btn   = datetime.date.fromisoformat(_dk)
                 _prod_btn = dados["lancamentos"][_dk].get("produzidos", 0)
-                _dia_nm  = _DIAS_PT[_dt_btn.weekday()]
-                _ativo   = (_dk == chave)
-                _border  = "#4FC3F7" if _ativo else "#2A3548"
-                _bg      = "#0D2137" if _ativo else "#1A2236"
+                _dia_nm   = _DIAS_PT[_dt_btn.weekday()]
+                _ativo    = (_dk == chave)
+                _is_fer   = _dk in _feriados
+                _fer_nome = _feriados.get(_dk, "")
+                _border   = "#4FC3F7" if _ativo else ("#EF5350" if _is_fer else "#2A3548")
+                _bg       = "#0D2137" if _ativo else ("#1A0D0D" if _is_fer else "#1A2236")
+                _badge    = f'<div style="font-size:10px;color:#EF5350;font-weight:700;margin-top:2px;">🔴 {_fer_nome}</div>' if _is_fer else f'<div style="font-size:13px;color:#4FC3F7;font-weight:700;margin-top:4px;">{_prod_btn} pneus</div>'
                 _cols_edit[_ci].markdown(
                     f'<div style="background:{_bg};border:1.5px solid {_border};border-radius:10px;'
                     f'padding:10px 6px 6px;text-align:center;margin-bottom:4px;">'
                     f'<div style="font-size:10px;color:#9AA3B2;font-weight:700;letter-spacing:.6px;text-transform:uppercase;">{_dia_nm}</div>'
                     f'<div style="font-size:18px;font-weight:900;color:#E8EAF0;line-height:1.2;">{_dt_btn.strftime("%d/%m/%Y")}</div>'
-                    f'<div style="font-size:13px;color:#4FC3F7;font-weight:700;margin-top:4px;">{_prod_btn} pneus</div>'
+                    f'{_badge}'
                     f'</div>',
                     unsafe_allow_html=True,
                 )
@@ -457,9 +461,11 @@ def tela_lancamento():
     for k, lanc in dias_mes:
         dt = datetime.date.fromisoformat(k)
         c  = calcular_dia(lanc, config)
+        _fer_label = ("🔴 " + _feriados[k]) if k in _feriados else ""
         rows.append({
             "Data":                 dt.strftime("%d/%m/%Y"),
             "Dia da Semana":        dt.strftime("%A"),
+            "Feriado":              _fer_label,
             "Total Colab.":         c["colab_total"],
             "Colab. Presentes":     c["colab_presentes"],
             "Colab. Ausentes":      c["colab_ausentes"],
@@ -492,6 +498,7 @@ def tela_lancamento():
         rows.append({
             "Data":                 "TOTAIS / MÉDIAS",
             "Dia da Semana":        f"({n} dias c/ prod.)",
+            "Feriado":              "",
             "Total Colab.":         "",
             "Colab. Presentes":     round(sum(r["Colab. Presentes"] for r in dias_prod) / n, 1),
             "Colab. Ausentes":      round(sum(r["Colab. Ausentes"]  for r in dias_prod) / n, 1),

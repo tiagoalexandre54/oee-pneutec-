@@ -224,15 +224,18 @@ def tela_dashboard():
         st.info("Sem lançamentos no mês atual.")
         return
 
+    _feriados = dados.get("feriados", {})
     rows = []
     for chave, lanc in dias_mes:
-        dt   = datetime.date.fromisoformat(chave)
-        prod = int(lanc.get("produzidos", 0))
+        dt       = datetime.date.fromisoformat(chave)
+        prod     = int(lanc.get("produzidos", 0))
+        _fer_lbl = ("🔴 " + _feriados[chave]) if chave in _feriados else ""
         if prod == 0:
             c0 = calcular_dia(lanc, config)
             rows.append({
                 "Data":                 dt.strftime("%d/%m/%Y"),
                 "Dia":                  dt.strftime("%a"),
+                "Feriado":              _fer_lbl,
                 "Colab. Pres.":         c0["colab_presentes"],
                 "Pneus por Homem/dia":  c0["pneus_homem_dia"],
                 "Pneus a Produzir":     c0["pneus_a_produzir"],
@@ -250,6 +253,7 @@ def tela_dashboard():
             rows.append({
                 "Data":                 dt.strftime("%d/%m/%Y"),
                 "Dia":                  dt.strftime("%a"),
+                "Feriado":              _fer_lbl,
                 "Colab. Pres.":         c["colab_presentes"],
                 "Pneus por Homem/dia":  int(round(c["pneus_homem_dia"])),
                 "Pneus a Produzir":     c["pneus_a_produzir"],

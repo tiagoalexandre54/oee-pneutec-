@@ -43,6 +43,7 @@ _DADOS_PADRAO = {
     "config":        _CONFIG_PADRAO.copy(),
     "lancamentos":   {},
     "analise_manual": {},
+    "feriados":      {},   # {"2026-06-12": "Corpus Christi", ...}
 }
 
 
@@ -125,6 +126,7 @@ def carregar_oee() -> dict:
     dados.setdefault("config", _CONFIG_PADRAO.copy())
     dados.setdefault("lancamentos", {})
     dados.setdefault("analise_manual", {})
+    dados.setdefault("feriados", {})
     return dados
 
 
