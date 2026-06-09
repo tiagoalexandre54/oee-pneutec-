@@ -216,40 +216,34 @@ def tela_dashboard():
     st.markdown("---")
     st.markdown("#### 📋 Resumo Diário — " + mes_label)
 
-    dias_mes = sorted(
+    _feriados = dados.get("feriados", {})
+    dias_mes  = sorted(
         [(k, v) for k, v in lancs.items() if k.startswith(mes_iso)],
         key=lambda x: x[0],
     )
-    if not dias_mes:
+    _feriados_mes  = {k: v for k, v in _feriados.items() if k.startswith(mes_iso)}
+    _todas_datas   = sorted(set(k for k, _ in dias_mes) | set(_feriados_mes.keys()))
+
+    if not _todas_datas:
         st.info("Sem lançamentos no mês atual.")
         return
 
-    _feriados = dados.get("feriados", {})
     rows = []
-    for chave, lanc in dias_mes:
+    for chave in _todas_datas:
         dt       = datetime.date.fromisoformat(chave)
-        prod     = int(lanc.get("produzidos", 0))
-        _fer_lbl = ("🔴 " + _feriados[chave]) if chave in _feriados else ""
-        if prod == 0:
-            c0 = calcular_dia(lanc, config)
-            rows.append({
-                "Data":                 dt.strftime("%d/%m/%Y"),
-                "Dia":                  dt.strftime("%a"),
-                "Feriado":              _fer_lbl,
-                "Colab. Pres.":         c0["colab_presentes"],
-                "Pneus por Homem/dia":  c0["pneus_homem_dia"],
-                "Pneus a Produzir":     c0["pneus_a_produzir"],
-                "Pneus Produzidos":     0,
-                "Aprovados":            0,
-                "Defeitos":             0,
-                "Disponib.":            "—",
-                "Desempenho":           "—",
-                "Qualidade":            "—",
-                "OEE":                  "—",
-                "Status":               "",
-            })
-        else:
-            c = calcular_dia(lanc, config)
+        _is_fer  = chave in _feriados
+        _fer_lbl = ("🔴 " + _feriados[chave]) if _is_fer else ""
+
+        if chave in lancs:
+            lanc = lancs[chave]
+            prod = int(lanc.get("produzidos", 0))
+            c    = calcular_dia(lanc, config)
+            if _is_fer and prod > 0:
+                _status = "⭐ Hora Extra"
+            elif prod > 0:
+                _status = status_oee(c["oee"])
+            else:
+                _status = "🔴 Não Trabalhado" if _is_fer else "—"
             rows.append({
                 "Data":                 dt.strftime("%d/%m/%Y"),
                 "Dia":                  dt.strftime("%a"),
@@ -257,14 +251,32 @@ def tela_dashboard():
                 "Colab. Pres.":         c["colab_presentes"],
                 "Pneus por Homem/dia":  int(round(c["pneus_homem_dia"])),
                 "Pneus a Produzir":     c["pneus_a_produzir"],
-                "Pneus Produzidos":     c["produzidos"],
+                "Pneus Produzidos":     prod,
                 "Aprovados":            c["aprovados"],
                 "Defeitos":             c["defeitos"],
-                "Disponib.":            f"{c['disponibilidade']*100:.1f}%",
-                "Desempenho":           f"{c['desempenho']*100:.1f}%",
-                "Qualidade":            f"{c['qualidade']*100:.1f}%",
-                "OEE":                  f"{c['oee']*100:.1f}%",
-                "Status":               status_oee(c["oee"]),
+                "Disponib.":            f"{c['disponibilidade']*100:.1f}%" if prod > 0 else "—",
+                "Desempenho":           f"{c['desempenho']*100:.1f}%" if prod > 0 else "—",
+                "Qualidade":            f"{c['qualidade']*100:.1f}%" if prod > 0 else "—",
+                "OEE":                  f"{c['oee']*100:.1f}%" if prod > 0 else "—",
+                "Status":               _status,
+            })
+        else:
+            # Feriado sem lançamento
+            rows.append({
+                "Data":                 dt.strftime("%d/%m/%Y"),
+                "Dia":                  dt.strftime("%a"),
+                "Feriado":              _fer_lbl,
+                "Colab. Pres.":         0,
+                "Pneus por Homem/dia":  "—",
+                "Pneus a Produzir":     0,
+                "Pneus Produzidos":     0,
+                "Aprovados":            0,
+                "Defeitos":             0,
+                "Disponib.":            "—",
+                "Desempenho":           "—",
+                "Qualidade":            "—",
+                "OEE":                  "—",
+                "Status":               "🔴 Não Trabalhado",
             })
 
     st.dataframe(pd.DataFrame(rows), hide_index=True, width="stretch")

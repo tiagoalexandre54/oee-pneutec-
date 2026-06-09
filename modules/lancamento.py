@@ -94,6 +94,15 @@ def tela_lancamento():
     chave    = data_sel.isoformat()
     e        = lancs.get(chave, {})
 
+    # Aviso de feriado
+    _feriados_all = dados.get("feriados", {})
+    if chave in _feriados_all:
+        _nome_fer = _feriados_all[chave]
+        if e and int(e.get("produzidos", 0)) > 0:
+            st.warning(f"⭐ **Hora Extra** — {data_sel.strftime('%d/%m/%Y')} é feriado (**{_nome_fer}**). Produção lançada será marcada como hora extra.")
+        else:
+            st.error(f"🔴 **Feriado: {_nome_fer}** — {data_sel.strftime('%d/%m/%Y')} está marcado como feriado. Registrar produção aqui indica **hora extra**.")
+
     if e:
         st.info(f"✏️ Editando lançamento de **{data_sel.strftime('%d/%m/%Y')}** — dados anteriores carregados.")
 
@@ -457,35 +466,76 @@ def tela_lancamento():
                     st.session_state["_lanc_edit_override"] = _dt_btn
                     st.rerun()
 
+    # Unir lançamentos + feriados do mês (feriados aparecem mesmo sem lançamento)
+    _feriados_mes = {k: v for k, v in _feriados.items() if k.startswith(mes_atual)}
+    _todas_datas  = sorted(set(k for k, _ in dias_mes) | set(_feriados_mes.keys()))
+
     rows = []
-    for k, lanc in dias_mes:
-        dt = datetime.date.fromisoformat(k)
-        c  = calcular_dia(lanc, config)
+    for k in _todas_datas:
+        dt         = datetime.date.fromisoformat(k)
         _fer_label = ("🔴 " + _feriados[k]) if k in _feriados else ""
-        rows.append({
-            "Data":                 dt.strftime("%d/%m/%Y"),
-            "Dia da Semana":        dt.strftime("%A"),
-            "Feriado":              _fer_label,
-            "Total Colab.":         c["colab_total"],
-            "Colab. Presentes":     c["colab_presentes"],
-            "Colab. Ausentes":      c["colab_ausentes"],
-            "Faltas":               int(lanc.get("faltas", c["colab_ausentes"])),
-            "T. Disp.(h)":          round(c["tempo_disp"],      2),
-            "Par. Plan.(h)":        round(c["paradas_plan_h"],  2),
-            "Par. N.Plan.(h)":      round(c["paradas_nplan_h"], 2),
-            "T. Oper.(h)":          round(c["tempo_oper"],      2),
-            "Pneus por Homem/dia":  int(round(c["pneus_homem_dia"])),
-            "Pneus a Produzir":     c["pneus_a_produzir"],
-            "Pneus Produzidos":     c["produzidos"],
-            "Pneus Defeito":        c["defeitos"],
-            "Pneus Aprovados":      c["aprovados"],
-            "Disponib. (A)":        f"{c['disponibilidade']*100:.2f}%",
-            "Desempenho (P)":       f"{c['desempenho']*100:.2f}%",
-            "Qualidade (Q)":        f"{c['qualidade']*100:.2f}%",
-            "OEE (%)":              f"{c['oee']*100:.2f}%",
-            "Status":               status_oee(c["oee"]) if c["produzidos"] > 0 else "—",
-            "Observações":          lanc.get("observacoes", ""),
-        })
+        _is_fer    = k in _feriados
+
+        if k in dados["lancamentos"]:
+            lanc = dados["lancamentos"][k]
+            c    = calcular_dia(lanc, config)
+            _prod = c["produzidos"]
+            if _is_fer and _prod > 0:
+                _status = "⭐ Hora Extra"
+            elif _prod > 0:
+                _status = status_oee(c["oee"])
+            else:
+                _status = "🔴 Não Trabalhado" if _is_fer else "—"
+            rows.append({
+                "Data":                 dt.strftime("%d/%m/%Y"),
+                "Dia da Semana":        dt.strftime("%A"),
+                "Feriado":              _fer_label,
+                "Total Colab.":         c["colab_total"],
+                "Colab. Presentes":     c["colab_presentes"],
+                "Colab. Ausentes":      c["colab_ausentes"],
+                "Faltas":               int(lanc.get("faltas", c["colab_ausentes"])),
+                "T. Disp.(h)":          round(c["tempo_disp"],      2),
+                "Par. Plan.(h)":        round(c["paradas_plan_h"],  2),
+                "Par. N.Plan.(h)":      round(c["paradas_nplan_h"], 2),
+                "T. Oper.(h)":          round(c["tempo_oper"],      2),
+                "Pneus por Homem/dia":  int(round(c["pneus_homem_dia"])),
+                "Pneus a Produzir":     c["pneus_a_produzir"],
+                "Pneus Produzidos":     _prod,
+                "Pneus Defeito":        c["defeitos"],
+                "Pneus Aprovados":      c["aprovados"],
+                "Disponib. (A)":        f"{c['disponibilidade']*100:.2f}%",
+                "Desempenho (P)":       f"{c['desempenho']*100:.2f}%",
+                "Qualidade (Q)":        f"{c['qualidade']*100:.2f}%",
+                "OEE (%)":              f"{c['oee']*100:.2f}%",
+                "Status":               _status,
+                "Observações":          lanc.get("observacoes", ""),
+            })
+        else:
+            # Feriado sem lançamento — dia não trabalhado
+            rows.append({
+                "Data":                 dt.strftime("%d/%m/%Y"),
+                "Dia da Semana":        dt.strftime("%A"),
+                "Feriado":              _fer_label,
+                "Total Colab.":         "—",
+                "Colab. Presentes":     "—",
+                "Colab. Ausentes":      "—",
+                "Faltas":               "—",
+                "T. Disp.(h)":          "—",
+                "Par. Plan.(h)":        "—",
+                "Par. N.Plan.(h)":      "—",
+                "T. Oper.(h)":          "—",
+                "Pneus por Homem/dia":  "—",
+                "Pneus a Produzir":     "—",
+                "Pneus Produzidos":     0,
+                "Pneus Defeito":        0,
+                "Pneus Aprovados":      0,
+                "Disponib. (A)":        "—",
+                "Desempenho (P)":       "—",
+                "Qualidade (Q)":        "—",
+                "OEE (%)":              "—",
+                "Status":               "🔴 Não Trabalhado",
+                "Observações":          _feriados[k],
+            })
 
     # Linha TOTAIS / MÉDIAS
     dias_prod = [r for r in rows if r["Pneus Produzidos"] > 0]
