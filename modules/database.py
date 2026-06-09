@@ -171,8 +171,8 @@ def calcular_dia(lanc: dict, config: dict) -> dict:
     defeitos       = int(lanc.get("defeitos",   0))
 
     colab_aus      = colab_total - colab_pres
-    pneus_hd       = round(pneus_colab_mes / dias_uteis, 4) if dias_uteis > 0 else 0
-    pneus_a_prod   = round(colab_pres * pneus_hd)
+    pneus_hd       = int(round(pneus_colab_mes / dias_uteis)) if dias_uteis > 0 else 0
+    pneus_a_prod   = colab_pres * pneus_hd
     tempo_disp     = round(colab_pres * turno, 4)
     paradas_total  = par_plan + par_nplan
     tempo_oper     = max(round(tempo_disp - paradas_total, 4), 0.0)

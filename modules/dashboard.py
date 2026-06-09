@@ -181,12 +181,13 @@ def tela_dashboard():
         dt   = datetime.date.fromisoformat(chave)
         prod = int(lanc.get("produzidos", 0))
         if prod == 0:
+            c0 = calcular_dia(lanc, config)
             rows.append({
                 "Data":                 dt.strftime("%d/%m/%Y"),
                 "Dia":                  dt.strftime("%a"),
-                "Colab. Pres.":         int(lanc.get("colab_presentes", 0)),
-                "Pneus por Homem/dia":  "—",
-                "Pneus a Produzir":     "—",
+                "Colab. Pres.":         c0["colab_presentes"],
+                "Pneus por Homem/dia":  c0["pneus_homem_dia"],
+                "Pneus a Produzir":     c0["pneus_a_produzir"],
                 "Pneus Produzidos":     0,
                 "Aprovados":            0,
                 "Defeitos":             0,
