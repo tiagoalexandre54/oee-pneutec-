@@ -176,30 +176,36 @@ def tela_dashboard():
         prod = int(lanc.get("produzidos", 0))
         if prod == 0:
             rows.append({
-                "Data":        dt.strftime("%d/%m/%Y"),
-                "Dia":         dt.strftime("%a"),
-                "Produzido":   0,
-                "Aprovados":   0,
-                "Defeitos":    0,
-                "Disponib.":   "—",
-                "Desempenho":  "—",
-                "Qualidade":   "—",
-                "OEE":         "—",
-                "Status":      "",
+                "Data":                 dt.strftime("%d/%m/%Y"),
+                "Dia":                  dt.strftime("%a"),
+                "Colab. Pres.":         int(lanc.get("colab_presentes", 0)),
+                "Pneus por Homem/dia":  "—",
+                "Pneus a Produzir":     "—",
+                "Pneus Produzidos":     0,
+                "Aprovados":            0,
+                "Defeitos":             0,
+                "Disponib.":            "—",
+                "Desempenho":           "—",
+                "Qualidade":            "—",
+                "OEE":                  "—",
+                "Status":               "",
             })
         else:
             c = calcular_dia(lanc, config)
             rows.append({
-                "Data":        dt.strftime("%d/%m/%Y"),
-                "Dia":         dt.strftime("%a"),
-                "Produzido":   c["produzidos"],
-                "Aprovados":   c["aprovados"],
-                "Defeitos":    c["defeitos"],
-                "Disponib.":   f"{c['disponibilidade']*100:.1f}%",
-                "Desempenho":  f"{c['desempenho']*100:.1f}%",
-                "Qualidade":   f"{c['qualidade']*100:.1f}%",
-                "OEE":         f"{c['oee']*100:.1f}%",
-                "Status":      status_oee(c["oee"]),
+                "Data":                 dt.strftime("%d/%m/%Y"),
+                "Dia":                  dt.strftime("%a"),
+                "Colab. Pres.":         c["colab_presentes"],
+                "Pneus por Homem/dia":  round(c["pneus_homem_dia"], 1),
+                "Pneus a Produzir":     c["pneus_a_produzir"],
+                "Pneus Produzidos":     c["produzidos"],
+                "Aprovados":            c["aprovados"],
+                "Defeitos":             c["defeitos"],
+                "Disponib.":            f"{c['disponibilidade']*100:.1f}%",
+                "Desempenho":           f"{c['desempenho']*100:.1f}%",
+                "Qualidade":            f"{c['qualidade']*100:.1f}%",
+                "OEE":                  f"{c['oee']*100:.1f}%",
+                "Status":               status_oee(c["oee"]),
             })
 
     st.dataframe(pd.DataFrame(rows), hide_index=True, width="stretch")

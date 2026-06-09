@@ -367,7 +367,7 @@ def tela_lancamento():
                 f'<div style="background:#1A2236;border-radius:10px;padding:16px 20px;'
                 f'border:1px solid #2A3548;margin-bottom:16px;display:flex;gap:24px;align-items:center;">'
                 f'<div style="text-align:center;">'
-                f'<div style="font-size:10px;color:#9AA3B2;font-weight:700;text-transform:uppercase;letter-spacing:.7px;">🎯 Deveria Produzir</div>'
+                f'<div style="font-size:10px;color:#9AA3B2;font-weight:700;text-transform:uppercase;letter-spacing:.7px;">🎯 Pneus a Produzir</div>'
                 f'<div style="font-size:2rem;font-weight:900;color:#4FC3F7;">{_deveria}</div>'
                 f'<div style="font-size:11px;color:#9AA3B2;">{c["colab_presentes"]} colab × {c["pneus_homem_dia"]:.1f} pneus/H/dia</div>'
                 f'</div>'
@@ -442,30 +442,31 @@ def tela_lancamento():
         dt = datetime.date.fromisoformat(k)
         c  = calcular_dia(lanc, config)
         rows.append({
-            "Data":               dt.strftime("%d/%m/%Y"),
-            "Dia da Semana":      dt.strftime("%A"),
-            "Total Colab.":       c["colab_total"],
-            "Presentes":          c["colab_presentes"],
-            "Faltas":             int(lanc.get("faltas", c["colab_ausentes"])),
-            "T. Disp.(h)":        round(c["tempo_disp"],     2),
-            "Par. Plan.(h)":      round(c["paradas_plan_h"], 2),
-            "Par. N.Plan.(h)":    round(c["paradas_nplan_h"],2),
-            "T. Oper.(h)":        round(c["tempo_oper"],     2),
-            "Pneus/H/dia":        round(c["pneus_homem_dia"],1),
-            "Deveria Produzir":   c["pneus_a_produzir"],
-            "Produzidos":         c["produzidos"],
-            "Defeitos":           c["defeitos"],
-            "Aprovados":          c["aprovados"],
-            "Disponib. (A)":      f"{c['disponibilidade']*100:.2f}%",
-            "Desempenho (P)":     f"{c['desempenho']*100:.2f}%",
-            "Qualidade (Q)":      f"{c['qualidade']*100:.2f}%",
-            "OEE (%)":            f"{c['oee']*100:.2f}%",
-            "Status":             status_oee(c["oee"]) if c["produzidos"] > 0 else "—",
-            "Observações":        lanc.get("observacoes", ""),
+            "Data":                 dt.strftime("%d/%m/%Y"),
+            "Dia da Semana":        dt.strftime("%A"),
+            "Total Colab.":         c["colab_total"],
+            "Colab. Presentes":     c["colab_presentes"],
+            "Colab. Ausentes":      c["colab_ausentes"],
+            "Faltas":               int(lanc.get("faltas", c["colab_ausentes"])),
+            "T. Disp.(h)":          round(c["tempo_disp"],      2),
+            "Par. Plan.(h)":        round(c["paradas_plan_h"],  2),
+            "Par. N.Plan.(h)":      round(c["paradas_nplan_h"], 2),
+            "T. Oper.(h)":          round(c["tempo_oper"],      2),
+            "Pneus por Homem/dia":  round(c["pneus_homem_dia"], 1),
+            "Pneus a Produzir":     c["pneus_a_produzir"],
+            "Pneus Produzidos":     c["produzidos"],
+            "Pneus Defeito":        c["defeitos"],
+            "Pneus Aprovados":      c["aprovados"],
+            "Disponib. (A)":        f"{c['disponibilidade']*100:.2f}%",
+            "Desempenho (P)":       f"{c['desempenho']*100:.2f}%",
+            "Qualidade (Q)":        f"{c['qualidade']*100:.2f}%",
+            "OEE (%)":              f"{c['oee']*100:.2f}%",
+            "Status":               status_oee(c["oee"]) if c["produzidos"] > 0 else "—",
+            "Observações":          lanc.get("observacoes", ""),
         })
 
     # Linha TOTAIS / MÉDIAS
-    dias_prod = [r for r in rows if r["Produzidos"] > 0]
+    dias_prod = [r for r in rows if r["Pneus Produzidos"] > 0]
     if dias_prod:
         n = len(dias_prod)
         def _avg_pct(col):
@@ -473,35 +474,37 @@ def tela_lancamento():
             return f"{sum(vals)/n:.2f}%"
 
         rows.append({
-            "Data":               "TOTAIS / MÉDIAS",
-            "Dia da Semana":      f"({n} dias c/ prod.)",
-            "Total Colab.":       "",
-            "Presentes":          round(sum(r["Presentes"]  for r in dias_prod) / n, 1),
-            "Faltas":             sum(r["Faltas"] for r in dias_prod),
-            "T. Disp.(h)":        round(sum(r["T. Disp.(h)"]     for r in dias_prod), 2),
-            "Par. Plan.(h)":      round(sum(r["Par. Plan.(h)"]   for r in dias_prod), 2),
-            "Par. N.Plan.(h)":    round(sum(r["Par. N.Plan.(h)"] for r in dias_prod), 2),
-            "T. Oper.(h)":        round(sum(r["T. Oper.(h)"]     for r in dias_prod), 2),
-            "Pneus/H/dia":        round(sum(r["Pneus/H/dia"] for r in dias_prod) / n, 1),
-            "Deveria Produzir":   round(sum(r["Deveria Produzir"] for r in dias_prod) / n),
-            "Produzidos":         sum(r["Produzidos"] for r in dias_prod),
-            "Defeitos":           sum(r["Defeitos"]   for r in dias_prod),
-            "Aprovados":          sum(r["Aprovados"]  for r in dias_prod),
-            "Disponib. (A)":      _avg_pct("Disponib. (A)"),
-            "Desempenho (P)":     _avg_pct("Desempenho (P)"),
-            "Qualidade (Q)":      _avg_pct("Qualidade (Q)"),
-            "OEE (%)":            _avg_pct("OEE (%)"),
-            "Status":             "",
-            "Observações":        "",
+            "Data":                 "TOTAIS / MÉDIAS",
+            "Dia da Semana":        f"({n} dias c/ prod.)",
+            "Total Colab.":         "",
+            "Colab. Presentes":     round(sum(r["Colab. Presentes"] for r in dias_prod) / n, 1),
+            "Colab. Ausentes":      round(sum(r["Colab. Ausentes"]  for r in dias_prod) / n, 1),
+            "Faltas":               sum(r["Faltas"]          for r in dias_prod),
+            "T. Disp.(h)":          round(sum(r["T. Disp.(h)"]      for r in dias_prod), 2),
+            "Par. Plan.(h)":        round(sum(r["Par. Plan.(h)"]    for r in dias_prod), 2),
+            "Par. N.Plan.(h)":      round(sum(r["Par. N.Plan.(h)"]  for r in dias_prod), 2),
+            "T. Oper.(h)":          round(sum(r["T. Oper.(h)"]      for r in dias_prod), 2),
+            "Pneus por Homem/dia":  round(sum(r["Pneus por Homem/dia"] for r in dias_prod) / n, 1),
+            "Pneus a Produzir":     round(sum(r["Pneus a Produzir"] for r in dias_prod) / n),
+            "Pneus Produzidos":     sum(r["Pneus Produzidos"] for r in dias_prod),
+            "Pneus Defeito":        sum(r["Pneus Defeito"]    for r in dias_prod),
+            "Pneus Aprovados":      sum(r["Pneus Aprovados"]  for r in dias_prod),
+            "Disponib. (A)":        _avg_pct("Disponib. (A)"),
+            "Desempenho (P)":       _avg_pct("Desempenho (P)"),
+            "Qualidade (Q)":        _avg_pct("Qualidade (Q)"),
+            "OEE (%)":              _avg_pct("OEE (%)"),
+            "Status":               "",
+            "Observações":          "",
         })
 
     df_tab = pd.DataFrame(rows)
-    # "Total Colab." tem string "" na linha de totais e int nas demais → str
+    # "Total Colab." tem string "" na linha de totais → converter para str
     if "Total Colab." in df_tab.columns:
         df_tab["Total Colab."] = df_tab["Total Colab."].astype(str)
-    # Presentes: int nas linhas, float na linha de totais → float
-    if "Presentes" in df_tab.columns:
-        df_tab["Presentes"] = pd.to_numeric(df_tab["Presentes"], errors="coerce")
+    # Colunas numéricas que têm float na linha de totais e int nas demais
+    for _nc in ["Colab. Presentes", "Colab. Ausentes"]:
+        if _nc in df_tab.columns:
+            df_tab[_nc] = pd.to_numeric(df_tab[_nc], errors="coerce")
     st.dataframe(df_tab, hide_index=True, width="stretch")
     st.caption(
         "📌 TOTAIS = soma · MÉDIAS = média dos dias com produção  |  "
