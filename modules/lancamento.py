@@ -369,7 +369,7 @@ def tela_lancamento():
                 f'<div style="text-align:center;">'
                 f'<div style="font-size:10px;color:#9AA3B2;font-weight:700;text-transform:uppercase;letter-spacing:.7px;">🎯 Pneus a Produzir</div>'
                 f'<div style="font-size:2rem;font-weight:900;color:#4FC3F7;">{_deveria}</div>'
-                f'<div style="font-size:11px;color:#9AA3B2;">{c["colab_presentes"]} colab × {c["pneus_homem_dia"]:.1f} pneus/H/dia</div>'
+                f'<div style="font-size:11px;color:#9AA3B2;">{c["colab_presentes"]} colab × {int(round(c["pneus_homem_dia"]))} pneus/H/dia</div>'
                 f'</div>'
                 f'<div style="font-size:1.8rem;color:#2A3548;font-weight:300;">→</div>'
                 f'<div style="text-align:center;">'
@@ -398,7 +398,7 @@ def tela_lancamento():
             col_d4.metric("Paradas Total (h)", f"{c['paradas_total_h']:.1f}h")
 
             col_d5, col_d6, col_d7, col_d8 = st.columns(4)
-            col_d5.metric("Pneus/Homem/dia",  f"{c['pneus_homem_dia']:.0f}")
+            col_d5.metric("Pneus/Homem/dia",  str(int(round(c["pneus_homem_dia"]))))
             col_d6.metric("Colab. Ausentes",  c["colab_ausentes"])
             col_d7.metric("Aprovados",         c["aprovados"])
             col_d8.metric("Defeitos",          c["defeitos"])
@@ -452,7 +452,7 @@ def tela_lancamento():
             "Par. Plan.(h)":        round(c["paradas_plan_h"],  2),
             "Par. N.Plan.(h)":      round(c["paradas_nplan_h"], 2),
             "T. Oper.(h)":          round(c["tempo_oper"],      2),
-            "Pneus por Homem/dia":  round(c["pneus_homem_dia"], 1),
+            "Pneus por Homem/dia":  int(round(c["pneus_homem_dia"])),
             "Pneus a Produzir":     c["pneus_a_produzir"],
             "Pneus Produzidos":     c["produzidos"],
             "Pneus Defeito":        c["defeitos"],

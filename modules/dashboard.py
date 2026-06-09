@@ -101,13 +101,19 @@ def tela_dashboard():
         meta_m   = agg["meta_mensal"]
         pct_meta = agg["produzido"] / meta_m if meta_m else 0
 
-        k1, k2, k3, k4, k5, k6 = st.columns(6)
+        k1, k2, k3, k4 = st.columns(4)
         k1.metric("🔢 Total Produzido",    f"{agg['produzido']:,}")
         k2.metric("✅ Aprovados",          f"{agg['aprovados']:,}")
         k3.metric("❌ Defeitos",           str(agg["defeitos"]))
         k4.metric("🎯 Meta Mensal",        f"{int(meta_m):,}")
+
+        _pneus_hd = int(round(float(config.get("pneus_colab_mes", 180)) / max(float(config.get("dias_uteis", 20)), 1)))
+        _pneus_hm = int(config.get("pneus_colab_mes", 180))
+        k5, k6, k7, k8 = st.columns(4)
         k5.metric("📈 % da Meta",          f"{pct_meta*100:.1f}%")
         k6.metric("👥 Colab. Presentes",   f"{agg['media_colab']:.1f}")
+        k7.metric("🔧 Pneus/Homem Dia",    str(_pneus_hd))
+        k8.metric("📦 Pneus/Homem Mês",    str(_pneus_hm))
 
         # Status banner
         s = status_oee(agg["oee"], mensal=True)
@@ -196,7 +202,7 @@ def tela_dashboard():
                 "Data":                 dt.strftime("%d/%m/%Y"),
                 "Dia":                  dt.strftime("%a"),
                 "Colab. Pres.":         c["colab_presentes"],
-                "Pneus por Homem/dia":  round(c["pneus_homem_dia"], 1),
+                "Pneus por Homem/dia":  int(round(c["pneus_homem_dia"])),
                 "Pneus a Produzir":     c["pneus_a_produzir"],
                 "Pneus Produzidos":     c["produzidos"],
                 "Aprovados":            c["aprovados"],
