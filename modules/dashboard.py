@@ -86,6 +86,54 @@ def tela_dashboard():
     </div>
     """, unsafe_allow_html=True)
 
+    # ── Card do último lançamento ─────────────────────────────────────────────
+    _ult_chave = max((k for k in lancs if k.startswith(mes_iso)), default=None) or (
+        max(lancs.keys(), default=None)
+    )
+    if _ult_chave:
+        _ult_lanc = lancs[_ult_chave]
+        _ult_c    = calcular_dia(_ult_lanc, config)
+        _ult_dt   = datetime.date.fromisoformat(_ult_chave)
+        _DIAS_PT  = ["Segunda","Terça","Quarta","Quinta","Sexta","Sábado","Domingo"]
+        _ult_dia  = _DIAS_PT[_ult_dt.weekday()]
+        _diff_prod = _ult_c["produzidos"] - _ult_c["pneus_a_produzir"]
+        _cor_diff  = "#4CAF50" if _diff_prod >= 0 else "#EF5350"
+        _sinal     = "+" if _diff_prod >= 0 else ""
+        st.markdown(
+            f'<div style="background:#1A2236;border:1px solid #2A3548;border-radius:12px;'
+            f'padding:16px 20px;margin-bottom:20px;">'
+            f'<div style="font-size:11px;color:#9AA3B2;font-weight:700;text-transform:uppercase;'
+            f'letter-spacing:.8px;margin-bottom:10px;">📌 Último Lançamento — '
+            f'{_ult_dia}, {_ult_dt.strftime("%d/%m/%Y")}</div>'
+            f'<div style="display:flex;gap:12px;flex-wrap:wrap;">'
+            # Colab. Presentes
+            f'<div style="flex:1;min-width:120px;background:#0D2137;border-radius:8px;padding:12px;text-align:center;">'
+            f'<div style="font-size:10px;color:#9AA3B2;font-weight:700;text-transform:uppercase;">👥 Colab. Presentes</div>'
+            f'<div style="font-size:2rem;font-weight:900;color:#4FC3F7;">{_ult_c["colab_presentes"]}</div>'
+            f'<div style="font-size:10px;color:#9AA3B2;">de {_ult_c["colab_total"]} total</div>'
+            f'</div>'
+            # Pneus por Homem/dia
+            f'<div style="flex:1;min-width:120px;background:#0D2137;border-radius:8px;padding:12px;text-align:center;">'
+            f'<div style="font-size:10px;color:#9AA3B2;font-weight:700;text-transform:uppercase;">🔧 Pneus / Homem / Dia</div>'
+            f'<div style="font-size:2rem;font-weight:900;color:#4FC3F7;">{_ult_c["pneus_homem_dia"]}</div>'
+            f'<div style="font-size:10px;color:#9AA3B2;">{int(config.get("pneus_colab_mes",180))} pneus/homem/mês</div>'
+            f'</div>'
+            # Pneus a Produzir
+            f'<div style="flex:1;min-width:120px;background:#0D2137;border-radius:8px;padding:12px;text-align:center;">'
+            f'<div style="font-size:10px;color:#9AA3B2;font-weight:700;text-transform:uppercase;">🎯 Pneus a Produzir</div>'
+            f'<div style="font-size:2rem;font-weight:900;color:#4FC3F7;">{_ult_c["pneus_a_produzir"]}</div>'
+            f'<div style="font-size:10px;color:#9AA3B2;">{_ult_c["colab_presentes"]} × {_ult_c["pneus_homem_dia"]} pneus/H/dia</div>'
+            f'</div>'
+            # Pneus Produzidos
+            f'<div style="flex:1;min-width:120px;background:#0D2137;border-radius:8px;padding:12px;text-align:center;">'
+            f'<div style="font-size:10px;color:#9AA3B2;font-weight:700;text-transform:uppercase;">✅ Pneus Produzidos</div>'
+            f'<div style="font-size:2rem;font-weight:900;color:#E8EAF0;">{_ult_c["produzidos"]}</div>'
+            f'<div style="font-size:10px;color:{_cor_diff};font-weight:700;">{_sinal}{_diff_prod} vs meta do dia</div>'
+            f'</div>'
+            f'</div></div>',
+            unsafe_allow_html=True,
+        )
+
     # ── Indicadores do mês atual ──────────────────────────────────────────────
     st.markdown(f"#### Indicadores de {mes_label}")
 
