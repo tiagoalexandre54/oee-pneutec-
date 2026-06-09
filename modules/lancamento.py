@@ -425,17 +425,33 @@ def tela_lancamento():
 
     st.markdown(f"#### 📅 Resumo de {data_sel.strftime('%B %Y').capitalize()}")
 
-    # Botões de edição rápida por dia
+    # Cards de edição rápida por dia
+    _DIAS_PT = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"]
     _datas_mes_exist = sorted([k for k in dados["lancamentos"] if k.startswith(mes_atual)])
-    if len(_datas_mes_exist) > 1:
-        _cols_edit = st.columns(min(len(_datas_mes_exist), 7))
-        for _i, _dk in enumerate(_datas_mes_exist[:7]):
-            _dt_btn = datetime.date.fromisoformat(_dk)
-            _prod_btn = dados["lancamentos"][_dk].get("produzidos", 0)
-            _label_btn = f"{_dt_btn.strftime('%d/%m')}\n{_prod_btn}🔧"
-            if _cols_edit[_i % 7].button(_label_btn, key=f"btn_edit_quick_{_dk}", help=f"Editar {_dt_btn.strftime('%d/%m/%Y')}"):
-                st.session_state["_lanc_edit_override"] = _dt_btn
-                st.rerun()
+    if _datas_mes_exist:
+        _ncols = min(len(_datas_mes_exist), 7)
+        for _row_s in range(0, len(_datas_mes_exist), _ncols):
+            _row_dks = _datas_mes_exist[_row_s : _row_s + _ncols]
+            _cols_edit = st.columns(len(_row_dks))
+            for _ci, _dk in enumerate(_row_dks):
+                _dt_btn  = datetime.date.fromisoformat(_dk)
+                _prod_btn = dados["lancamentos"][_dk].get("produzidos", 0)
+                _dia_nm  = _DIAS_PT[_dt_btn.weekday()]
+                _ativo   = (_dk == chave)
+                _border  = "#4FC3F7" if _ativo else "#2A3548"
+                _bg      = "#0D2137" if _ativo else "#1A2236"
+                _cols_edit[_ci].markdown(
+                    f'<div style="background:{_bg};border:1.5px solid {_border};border-radius:10px;'
+                    f'padding:8px 4px 4px;text-align:center;margin-bottom:4px;">'
+                    f'<div style="font-size:10px;color:#9AA3B2;font-weight:600;letter-spacing:.5px;">{_dia_nm}</div>'
+                    f'<div style="font-size:15px;font-weight:800;color:#E8EAF0;line-height:1.2;">{_dt_btn.strftime("%d/%m")}</div>'
+                    f'<div style="font-size:12px;color:#4FC3F7;font-weight:700;margin-top:2px;">{_prod_btn} pneus</div>'
+                    f'</div>',
+                    unsafe_allow_html=True,
+                )
+                if _cols_edit[_ci].button("✏️ Editar", key=f"btn_eq_{_dk}", use_container_width=True):
+                    st.session_state["_lanc_edit_override"] = _dt_btn
+                    st.rerun()
 
     rows = []
     for k, lanc in dias_mes:
