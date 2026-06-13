@@ -1,0 +1,55 @@
+{
+  "_schema": 2,
+  "config": {
+    "meta_diaria": 360,
+    "pneus_colab_mes": 180,
+    "turno_horas": 8.8,
+    "dias_uteis": 20
+  },
+  "lancamentos": {
+    "2026-06-01": {
+      "colab_total": 36,
+      "colab_presentes": 34,
+      "faltas": 3,
+      "paradas_plan_h": 0.0,
+      "paradas_nplan_h": 0.0,
+      "produzidos": 327,
+      "defeitos": 0,
+      "observacoes": "férias\nAdemir\njosé luiz"
+    },
+    "2026-06-02": {
+      "colab_total": 36,
+      "colab_presentes": 33,
+      "faltas": 3,
+      "paradas_plan_h": 0.0,
+      "paradas_nplan_h": 0.0,
+      "produzidos": 324,
+      "defeitos": 0,
+      "observacoes": "atestado-Alexandre Faustino \nférias\nAdemir\njosé luiz"
+    },
+    "2026-06-03": {
+      "colab_total": 36,
+      "colab_presentes": 33,
+      "faltas": 3,
+      "paradas_plan_h": 0.0,
+      "paradas_nplan_h": 0.0,
+      "produzidos": 330,
+      "defeitos": 0,
+      "observacoes": "atestado-Alexandre Faustino \nférias\nAdemir\njosé luiz"
+    },
+    "2026-06-04": {
+      "colab_total": 0,
+      "colab_presentes": 0,
+      "faltas": 0,
+      "paradas_plan_h": 0.0,
+      "paradas_nplan_h": 0.0,
+      "produzidos": 0,
+      "defeitos": 0,
+      "observacoes": "feriado"
+    }
+  },
+  "analise_manual": {},
+  "feriados": {
+    "2026-06-04": "corpus christi"
+  }
+}
